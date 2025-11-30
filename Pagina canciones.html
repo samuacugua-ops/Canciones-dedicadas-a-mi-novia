@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>31 Días de Música y Frases</title>
+    <!-- Carga de Tailwind CSS para estilos modernos y responsivos -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Configuración para usar la fuente Inter y algunos colores personalizados -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'primary': '#A52A2A', // Marrón suave para el tema romántico
+                        'secondary': '#F0E6E6', // Beige claro
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        serif: ['Georgia', 'serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Estilos personalizados para un mejor efecto visual y la animación de fondo */
+        body {
+            background: linear-gradient(135deg, #f0e6e6 0%, #e0c8c8 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+            font-family: 'Inter', sans-serif;
+        }
+        .card {
+            transition: transform 0.5s ease-in-out, opacity 0.5s ease-in-out;
+            transform-style: preserve-3d;
+        }
+        .final-day {
+            background: linear-gradient(45deg, #a52a2a, #800000);
+            color: white;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 10px #A52A2A; }
+            50% { box-shadow: 0 0 20px #800000; }
+            100% { box-shadow: 0 0 10px #A52A2A; }
+        }
+        /* Oculta los controles de audio por defecto para que sea 'de fondo', 
+           pero deja el elemento para que JavaScript pueda interactuar con él. */
+        #audio-player {
+            position: fixed;
+            bottom: 10px;
+            left: 10px;
+            opacity: 0.2; /* Lo dejamos sutil */
+        }
+
+        /* Responsive para dispositivos móviles */
+        @media (max-width: 640px) {
+            .card {
+                padding: 1rem;
+                margin-top: 10vh; /* Espacio para la barra de navegación superior */
+            }
+            #audio-player {
+                left: 50%;
+                transform: translateX(-50%);
+            }
+        }
+    </style>
+</head>
+<body class="selection:bg-primary selection:text-white">
+
+    <!-- Contenedor principal de la aplicación -->
+    <div id="app-container" class="w-full max-w-2xl">
+
+        <!-- Tarjeta de Contenido Dinámico -->
+        <div id="content-card" class="card bg-white p-6 md:p-10 rounded-xl shadow-2xl border-t-8 border-primary transition duration-500 ease-in-out">
+            <!-- Título del Día y Canción -->
+            <div id="header-content" class="text-center mb-6">
+                <h1 id="dia-numero" class="text-4xl md:text-5xl font-extrabold text-primary mb-2">Día </h1>
+                <h2 id="cancion-titulo" class="text-xl md:text-2xl font-semibold text-gray-800 italic"></h2>
+                <p id="cancion-artista" class="text-sm text-gray-500 mt-1"></p>
+            </div>
+
+            <!-- Frase / Mensaje -->
+            <div class="border-t pt-6">
+                <p id="cancion-frase" class="text-lg md:text-xl font-serif text-gray-700 leading-relaxed"></p>
+            </div>
+            
+            <!-- Mensaje de Carga/Error (Oculto por defecto) -->
+            <div id="mensaje-error" class="hidden mt-4 p-3 bg-red-100 text-red-700 rounded-lg text-center font-semibold">
+                Error al cargar el audio o faltan archivos. Revisa la consola y los nombres de archivo.
+            </div>
+
+        </div>
+
+        <!-- Controles de Navegación -->
+        <div class="flex justify-between mt-8 space-x-4">
+            <button id="btn-anterior" class="flex items-center px-4 py-2 bg-white text-primary font-semibold rounded-full shadow-lg hover:bg-primary hover:text-white transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed">
+                <!-- Icono de Lucide-react: Chevron Left -->
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 mr-2"><path d="M15 18l-6-6 6-6"/></svg>
+                Anterior
+            </button>
+            <button id="btn-siguiente" class="flex items-center px-4 py-2 bg-primary text-white font-semibold rounded-full shadow-lg hover:bg-red-700 transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed">
+                Siguiente
+                <!-- Icono de Lucide-react: Chevron Right -->
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 ml-2"><path d="M9 18l6-6-6-6"/></svg>
+            </button>
+        </div>
+
+    </div>
+
+    <!-- Reproductor de Audio (Oculto/Sutil) -->
+    <!-- Se usa 'autoplay' para que intente iniciar la reproducción automáticamente, pero los navegadores modernos lo limitan.
+         El usuario puede interactuar con los controles si los muestra. -->
+    <audio id="audio-player" controls loop class="w-full max-w-xs">
+        <!-- El source se establece dinámicamente con JavaScript -->
+        <source id="audio-source" type="audio/mpeg">
+        Tu navegador no soporta el elemento de audio.
+    </audio>
+
+    <script>
+        // Array de datos con las 31 canciones y frases
+        const DIAS_DATA = [
+            // Día 1
+            { dia: 1, titulo: "Do I Wanna Know", artista: "Arctic Monkeys", frase: "Desde el primer día me pregunté si sentías lo mismo que yo… y aunque no lo dijeras, tus ojos ya me habían dado la respuesta.", archivo: "dia_01_do_i_wanna_know.mp3" },
+            // Día 2
+            { dia: 2, titulo: "Mysterious Girl", artista: "Damiano David", frase: "Hay algo en ti que no puedo descifrar, un misterio bonito que me atrae cada vez más, y del que no quiero escapar.", archivo: "dia_02_mysterious_girl.mp3" },
+            // Día 3
+            { dia: 3, titulo: "El Amor de Mi Vida", artista: "Tierra Santa", frase: "He escuchado muchas canciones de amor, pero ninguna suena tan real como cuando pienso en ti. Eres mi historia favorita.", archivo: "dia_03_el_amor_de_mi_vida.mp3" },
+            // Día 4
+            { dia: 4, titulo: "Dos Adolescentes y su Primer Amor", artista: "", frase: "Tal vez el mundo no lo entienda, pero hay algo puro en amarte como si fuera la primera vez… cada vez.", archivo: "dia_04_dos_adolescentes.mp3" },
+            // Día 5
+            { dia: 5, titulo: "Ella es mi Todo", artista: "Kaleth Morales", frase: "No hay palabras que me alcancen para describirte. Eres mi razón, mi calma y mi caos bonito.", archivo: "dia_05_ella_es_mi_todo.mp3" },
+            // Día 6
+            { dia: 6, titulo: "Zombie Lady", artista: "Damiano David", frase: "Aunque el mundo se apague, seguiría buscándote entre la oscuridad. Porque hasta en el silencio, mi corazón te reconoce.", archivo: "dia_06_zombie_lady.mp3" },
+            // Día 7
+            { dia: 7, titulo: "The Driver", artista: "Måneskin", frase: "Si la vida fuera una carretera, tú serías mi destino, y no me importaría perderme una y otra vez solo por encontrarte al final.", archivo: "dia_07_the_driver.mp3" },
+            // Día 8
+            { dia: 8, titulo: "Timezone", artista: "Måneskin", frase: "No importa la hora ni la distancia, siempre encuentro la forma de sentirte cerca, como si viviéramos en el mismo tiempo.", archivo: "dia_08_timezone.mp3" },
+            // Día 9
+            { dia: 9, titulo: "If Not for You", artista: "Måneskin", frase: "Si no fueras tú, nada tendría el mismo sentido. Todo en mi vida cambió el día que llegaste sin avisar.", archivo: "dia_09_if_not_for_you.mp3" },
+            // Día 10
+            { dia: 10, titulo: "Q Chimba", artista: "Universe", frase: "A veces me basta con escucharte reír para sentir que todo vale la pena. Eres la mejor parte de mis días.", archivo: "dia_10_q_chimba.mp3" },
+            // Día 11
+            { dia: 11, titulo: "Snowman", artista: "Sia", frase: "Aunque el frío quiera colarse en mi pecho, tú siempre logras derretirlo con solo una mirada.", archivo: "dia_11_snowman.mp3" },
+            // Día 12
+            { dia: 12, titulo: "Flaca", artista: "Nanpa Básico", frase: "Si supieras cuántas veces me pierdo pensando en ti… no como un amor perfecto, sino como ese que se siente real y necesario.", archivo: "dia_12_flaca.mp3" },
+            // Día 13
+            { dia: 13, titulo: "Let the World Burn", artista: "Chris Grey", frase: "Que arda el mundo si quiere, mientras tú y yo sigamos en pie. No necesito más refugio que tu presencia.", archivo: "dia_13_let_the_world_burn.mp3" },
+            // Día 14
+            { dia: 14, titulo: "Un Fantasma Enamorado", artista: "Cyclo y Zartcort", frase: "Aunque a veces me falten las palabras, mi alma te busca en cada pensamiento. Eres ese amor que se siente incluso en la distancia.", archivo: "dia_14_un_fantasma_enamorado.mp3" },
+            // Día 15
+            { dia: 15, titulo: "Sweet Child O’ Mine", artista: "Guns N’ Roses", frase: "Hay algo en ti que me devuelve la paz. Tu sonrisa tiene el poder de calmar todo lo que el mundo me quita.", archivo: "dia_15_sweet_child_o_mine.mp3" },
+            // Día 16
+            { dia: 16, titulo: "Poison", artista: "Alice Cooper", frase: "Eres ese veneno que no quiero curar, porque cada vez que me envenenas con tu amor, me siento más vivo.", archivo: "dia_16_poison.mp3" },
+            // Día 17
+            { dia: 17, titulo: "Bed of Roses", artista: "Bon Jovi", frase: "Si pudiera escoger un lugar para quedarme por siempre, sería entre tus brazos. No hay cama, ni mundo, ni lugar más cómodo que tu abrazo cuando todo se apaga.", archivo: "dia_17_bed_of_roses.mp3" },
+            // Día 18
+            { dia: 18, titulo: "Always", artista: "Bon Jovi", frase: "No hay promesa más sincera que la que se siente sin tener que decirla. Y la mía es simple: pase lo que pase, en mi corazón siempre vas a estar tú.", archivo: "dia_18_always.mp3" },
+            // Día 19
+            { dia: 19, titulo: "Cuando Nadie Nos Ve", artista: "Sauron", frase: "Lo nuestro no necesita miradas ni aplausos. Es algo que se entiende en silencio, cuando el mundo calla y solo quedamos tú y yo.", archivo: "dia_19_cuando_nadie_nos_ve.mp3" },
+            // Día 20
+            { dia: 20, titulo: "November Rain", artista: "Guns N’ Roses", frase: "A veces la vida llueve, pero mientras estés tú, hasta las tormentas se sienten distintas. Eres mi calma en medio del ruido, mi razón para no rendirme.", archivo: "dia_20_november_rain.mp3" },
+            // Día 21
+            { dia: 21, titulo: "This I Love", artista: "Guns N’ Roses", frase: "Hay amores que no se explican, solo se sienten con cada respiración. Y el mío por ti no necesita lógica, solo la certeza de que te amo de verdad.", archivo: "dia_21_this_i_love.mp3" },
+            // Día 22
+            { dia: 22, titulo: "T Regalo", artista: "Rels B", frase: "No tengo mucho para ofrecer, pero lo poco que soy, te lo entrego sin miedo. Mi tiempo, mis ganas, mis pensamientos… todo lo que me queda, te lo regalo a ti.", archivo: "dia_22_t_regalo.mp3" },
+            // Día 23
+            { dia: 23, titulo: "La Vida en un Beso", artista: "WarCry", frase: "Si la vida se resumiera en un solo momento, sería en ese beso que aún guardo en mi mente. Porque contigo, hasta un instante se vuelve eterno.", archivo: "dia_23_la_vida_en_un_beso.mp3" },
+            // Día 24
+            { dia: 24, titulo: "Querer Querernos", artista: "Canserbero", frase: "Quererte no ha sido perfecto, pero ha sido real. Y prefiero eso, porque lo verdadero a veces duele, pero también enseña a amar sin máscaras.", archivo: "dia_24_querer_querernos.mp3" },
+            // Día 25
+            { dia: 25, titulo: "Can’t Help Falling in Love", artista: "Elvis Presley", frase: "No planeé enamorarme de ti, solo pasó. Como cuando respiras sin darte cuenta, como si mi corazón ya supiera que te estaba esperando desde antes.", archivo: "dia_25_cant_help_falling_in_love.mp3" },
+            // Día 26
+            { dia: 26, titulo: "Aprender a Quererte", artista: "Morat", frase: "Aprender a quererte fue descubrir que amar no se trata solo de sentir, sino de cuidar, entender, y quedarse incluso cuando todo se complica.", archivo: "dia_26_aprender_a_quererte.mp3" },
+            // Día 27
+            { dia: 27, titulo: "Obsesionado", artista: "Knaya", frase: "Hay algo en ti que no puedo soltar, como si cada parte de mí te buscara sin descanso. No sé si es locura o amor, pero no quiero curarme de esto.", archivo: "dia_27_obsesionado.mp3" },
+            // Día 28
+            { dia: 28, titulo: "Un Beso Menos", artista: "Morat", frase: "Cada beso que no te doy se queda esperándote, guardado en mis ganas, acumulando razones para cuando por fin te vuelva a ver.", archivo: "dia_28_un_beso_menos.mp3" },
+            // Día 29
+            { dia: 29, titulo: "Ángel", artista: "Damiano David", frase: "Si alguna vez caigo, que sea en tus brazos. Porque incluso en mis peores días, tú siempre has sido el motivo por el que vuelvo a levantarme.", archivo: "dia_29_angel.mp3" },
+            // Día 30
+            { dia: 30, titulo: "The First Time", artista: "Damiano", frase: "A veces cierro los ojos y todo sigue sintiéndose como la primera vez que te vi. Ese momento donde sin saberlo, ya eras todo lo que quería.", archivo: "dia_30_the_first_time.mp3" },
+            // Día 31 - Mensaje especial
+            { dia: 31, titulo: "Palabras de Amor", artista: "Arkano", 
+              frase: "Treinta y un días, treinta y una canciones, y aún siento que no hay melodía que alcance para decirte lo que significas para mí.\n\nCada tema fue una forma distinta de confesarte lo que siento, una manera de dejarte un pedacito de mi alma sin necesidad de palabras vacías.\n\nGracias por ser mi inspiración, mi calma y mi motivo. Si el amor pudiera escribirse en notas, tú serías la canción más bonita que he escuchado.", 
+              archivo: "dia_31_palabras_de_amor.mp3", esFinal: true }
+        ];
+
+        let diaActual = 1; // Empezamos en el día 1
+
+        // Referencias a elementos del DOM
+        const diaNumeroEl = document.getElementById('dia-numero');
+        const cancionTituloEl = document.getElementById('cancion-titulo');
+        const cancionArtistaEl = document.getElementById('cancion-artista');
+        const cancionFraseEl = document.getElementById('cancion-frase');
+        const audioPlayer = document.getElementById('audio-player');
+        const audioSource = document.getElementById('audio-source');
+        const btnAnterior = document.getElementById('btn-anterior');
+        const btnSiguiente = document.getElementById('btn-siguiente');
+        const contentCard = document.getElementById('content-card');
+        const mensajeErrorEl = document.getElementById('mensaje-error');
+
+        // Función para actualizar la interfaz con el día seleccionado
+        function actualizarDia(index) {
+            // Aseguramos que el índice esté dentro de los límites
+            if (index < 1 || index > DIAS_DATA.length) return;
+            
+            // Ocultar cualquier error previo
+            mensajeErrorEl.classList.add('hidden');
+
+            diaActual = index;
+            const data = DIAS_DATA[index - 1]; // El array es base 0, los días son base 1
+
+            // 1. Aplicar efectos de transición
+            contentCard.classList.remove('final-day', 'opacity-100');
+            contentCard.classList.add('opacity-0');
+
+            setTimeout(() => {
+                // 2. Actualizar texto
+                diaNumeroEl.textContent = `Día ${data.dia}`;
+                cancionTituloEl.textContent = `“${data.titulo}”`;
+                cancionArtistaEl.textContent = data.artista ? `(${data.artista})` : '';
+                // Reemplazamos saltos de línea para mostrar el mensaje final correctamente
+                cancionFraseEl.innerHTML = data.frase.replace(/\n/g, '<br><br>');
+
+                // 3. Manejo de audio
+                const audioPath = `audio/${data.archivo}`;
+                audioSource.src = audioPath;
+                audioPlayer.load(); // Carga la nueva fuente
+                
+                const playAudio = () => {
+                    audioPlayer.play().catch(error => {
+                        console.error('Error al intentar reproducir automáticamente el audio:', error);
+                        // Mostrar un mensaje sutil si el navegador bloquea el autoplay
+                        mensajeErrorEl.textContent = 'El navegador ha bloqueado la reproducción automática. Por favor, pulsa Play en los controles de audio (abajo a la izquierda) para escuchar la canción.';
+                        mensajeErrorEl.classList.remove('hidden');
+                    });
+                };
+                
+                // Intentar reproducir automáticamente después de la carga
+                // Utilizamos el evento 'canplay' para asegurar que el audio está listo
+                audioPlayer.oncanplay = playAudio;
+
+                // 4. Estilos especiales para el Día 31
+                if (data.esFinal) {
+                    contentCard.classList.add('final-day', 'shadow-2xl');
+                    contentCard.classList.remove('bg-white', 'border-t-primary');
+                } else {
+                    contentCard.classList.remove('final-day');
+                    contentCard.classList.add('bg-white', 'border-t-primary');
+                }
+
+                // 5. Control de botones (deshabilitar en los extremos)
+                btnAnterior.disabled = diaActual === 1;
+                btnSiguiente.disabled = diaActual === DIAS_DATA.length;
+
+                // 6. Finalizar transición
+                contentCard.classList.remove('opacity-0');
+                contentCard.classList.add('opacity-100');
+
+            }, 500); // Espera 500ms (tiempo de la transición)
+        }
+
+        // --- Manejadores de Eventos ---
+
+        btnAnterior.addEventListener('click', () => {
+            if (diaActual > 1) {
+                actualizarDia(diaActual - 1);
+            }
+        });
+
+        btnSiguiente.addEventListener('click', () => {
+            if (diaActual < DIAS_DATA.length) {
+                actualizarDia(diaActual + 1);
+            }
+        });
+
+        // Evento de error de audio para informar al usuario
+        audioPlayer.onerror = function() {
+            // Muestra el mensaje de error si el archivo no se encuentra
+            const currentData = DIAS_DATA[diaActual - 1];
+            mensajeErrorEl.textContent = `¡Atención! No se pudo encontrar el archivo de audio: /audio/${currentData.archivo}. Asegúrate de que está en la carpeta 'audio' y el nombre coincide exactamente.`;
+            mensajeErrorEl.classList.remove('hidden');
+        };
+
+        // Iniciar la aplicación en el Día 1 al cargar la ventana
+        window.onload = () => {
+            actualizarDia(1);
+        };
+    </script>
+
+</body>
+</html>
